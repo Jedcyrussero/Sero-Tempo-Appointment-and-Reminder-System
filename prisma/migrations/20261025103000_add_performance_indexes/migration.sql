@@ -1,0 +1,13 @@
+CREATE INDEX "DocumentRequest_studentId_createdAt_idx" ON "DocumentRequest"("studentId", "createdAt");
+CREATE INDEX "DocumentRequest_status_createdAt_idx" ON "DocumentRequest"("status", "createdAt");
+CREATE INDEX "DocumentRequest_submittedByUserId_idx" ON "DocumentRequest"("submittedByUserId");
+CREATE INDEX "DocumentRequestStatusHistory_documentRequestId_createdAt_idx" ON "DocumentRequestStatusHistory"("documentRequestId", "createdAt");
+CREATE INDEX "PaymentRecord_status_createdAt_idx" ON "PaymentRecord"("status", "createdAt");
+CREATE INDEX "PaymentStatusHistory_paymentRecordId_createdAt_idx" ON "PaymentStatusHistory"("paymentRecordId", "createdAt");
+CREATE INDEX "AppointmentSchedule_isActive_date_startTime_idx" ON "AppointmentSchedule"("isActive", "date", "startTime");
+CREATE INDEX "Appointment_studentId_createdAt_idx" ON "Appointment"("studentId", "createdAt");
+CREATE INDEX "Appointment_status_idx" ON "Appointment"("status");
+CREATE INDEX "Appointment_scheduleId_idx" ON "Appointment"("scheduleId");
+CREATE INDEX "AppointmentStatusHistory_appointmentId_createdAt_idx" ON "AppointmentStatusHistory"("appointmentId", "createdAt");
+CREATE INDEX "Notification_userId_isRead_createdAt_idx" ON "Notification"("userId", "isRead", "createdAt");
+CREATE INDEX "Notification_userId_createdAt_idx" ON "Notification"("userId", "createdAt");

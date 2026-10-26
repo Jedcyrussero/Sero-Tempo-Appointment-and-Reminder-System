@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studentProfile   StudentProfile?
+  documentRequests DocumentRequest[] @relation("StudentRequests")
+  appointments     Appointment[]     @relation("StudentAppointments")
+  notifications    Notification[]
+  registrarChanges DocumentRequestStatusHistory[] @relation("RegistrarChanges")
+  financeChanges   PaymentStatusHistory[]        @relation("FinanceChanges")
+  appointmentChanges AppointmentStatusHistory[] @relation("AppointmentChanges")
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model StudentProfile {
+  id          String @id @default(cuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
+  studentIdNo String @unique
+  firstName   String
+  lastName    String
+  course      String
+  yearLevel   String
+  phone       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  documentRequests DocumentRequest[]
+  appointments     Appointment[]
+}
+
+model DocumentRequest {
+  id                String                 @id @default(cuid())
+  requestNumber     String                 @unique
+  studentId         String
+  student           StudentProfile         @relation(fields: [studentId], references: [id])
+  submittedByUserId String
+  submittedBy       User                   @relation("StudentRequests", fields: [submittedByUserId], references: [id])
+  studentName       String
+  studentNumber     String
+  course            String
+  yearLevel         String
+  documentType      String
+  purpose           String
+  additionalDetails String?
+  status            String                @default("SUBMITTED")
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  statusHistory DocumentRequestStatusHistory[]
+  paymentRecord PaymentRecord?
+
+  @@index([studentId, createdAt])
+  @@index([status, createdAt])
+  @@index([submittedByUserId])
+  @@index([createdAt])
+}
+
+model DocumentRequestStatusHistory {
+  id                String                 @id @default(cuid())
+  documentRequestId String
+  documentRequest   DocumentRequest         @relation(fields: [documentRequestId], references: [id])
+  status            String
+  changedByUserId   String?
+  changedBy         User?                   @relation("RegistrarChanges", fields: [changedByUserId], references: [id])
+  remarks           String?
+  createdAt         DateTime               @default(now())
+
+  @@index([documentRequestId, createdAt])
+}
+
+model PaymentRecord {
+  id                String        @id @default(cuid())
+  documentRequestId String        @unique
+  documentRequest   DocumentRequest @relation(fields: [documentRequestId], references: [id])
+  requestNumber     String
+  studentName       String
+  documentType      String
+  amount            Float?        @default(0)
+  status            String        @default("AWAITING_PAYMENT")
+  verifiedByUserId  String?
+  verificationDate  DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  statusHistory PaymentStatusHistory[]
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model PaymentStatusHistory {
+  id               String        @id @default(cuid())
+  paymentRecordId  String
+  paymentRecord    PaymentRecord @relation(fields: [paymentRecordId], references: [id])
+  status           String
+  changedByUserId  String?
+  changedBy        User?         @relation("FinanceChanges", fields: [changedByUserId], references: [id])
+  remarks          String?
+  createdAt        DateTime      @default(now())
+
+  @@index([paymentRecordId, createdAt])
+}
+
+model AppointmentSchedule {
+  id        String   @id @default(cuid())
+  date      DateTime
+  startTime String
+  endTime   String
+  capacity  Int      @default(1)
+  slotsUsed Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointments Appointment[]
+
+  @@index([isActive, date, startTime])
+}
+
+model Appointment {
+  id                String              @id @default(cuid())
+  appointmentNumber String              @unique
+  studentId         String
+  student           StudentProfile      @relation(fields: [studentId], references: [id])
+  studentUserId     String
+  studentUser       User                @relation("StudentAppointments", fields: [studentUserId], references: [id])
+  scheduleId        String
+  schedule          AppointmentSchedule @relation(fields: [scheduleId], references: [id])
+  purpose           String
+  description       String?
+  status            String              @default("PENDING")
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  statusHistory AppointmentStatusHistory[]
+
+  @@index([studentId, createdAt])
+  @@index([status])
+  @@index([scheduleId])
+  @@index([createdAt])
+}
+
+model AppointmentStatusHistory {
+  id            String            @id @default(cuid())
+  appointmentId String
+  appointment   Appointment        @relation(fields: [appointmentId], references: [id])
+  status        String
+  changedByUserId String?
+  changedBy     User?             @relation("AppointmentChanges", fields: [changedByUserId], references: [id])
+  remarks       String?
+  createdAt     DateTime          @default(now())
+
+  @@index([appointmentId, createdAt])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  message     String
+  type        String
+  link        String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@index([userId, createdAt])
+}
